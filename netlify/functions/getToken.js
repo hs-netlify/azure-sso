@@ -18,16 +18,16 @@ exports.handler = async (request, context) => {
     AZURE_AD_SECRET: secret,
   } = process.env;
 
-  const { code } = request.queryStringParameters;
+  const url = new URL(request.rawUrl);
 
-  console.log("it gets here in function");
+  const { code } = request.queryStringParameters;
 
   const config = {
     grant_type: "authorization_code",
     code: code,
     client_id: clientId,
     client_secret: secret,
-    redirect_uri: "http://localhost:8888/",
+    redirect_uri: url.origin,
   };
   const form = createForm(config);
 
@@ -43,8 +43,6 @@ exports.handler = async (request, context) => {
   );
 
   let data = await res.json();
-
-  console.log("we have data", data);
 
   return {
     body: JSON.stringify({ access_token: data.access_token }),
