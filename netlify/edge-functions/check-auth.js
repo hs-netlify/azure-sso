@@ -53,10 +53,10 @@ const ssoAuth = async (request, context) => {
         const res = await fetch(
           `${url.origin}/.netlify/functions/getToken?code=${code}`
         );
-        console.log("res", res);
+        console.log(`${url.origin}/.netlify/functions/getToken?code=${code}`);
         const { access_token } = await res.json();
         console.log("Access token", access_token);
-        console.log();
+
         if (access_token) {
           context.cookies.set({ name: "AAD_Token", value: access_token });
           const res = new Response(null, { status: 302 });
