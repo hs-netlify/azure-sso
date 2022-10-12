@@ -48,16 +48,21 @@ const ssoAuth = async (request, context) => {
     } else if (path === "/.netlify/functions/getToken") {
       return context.next();
     } else if (code) {
-      const { access_token } = await (
-        await fetch(`${url.origin}/.netlify/functions/getToken?code=${code}`)
-      ).json();
-      if (access_token) {
-        context.cookies.set({ name: "AAD_Token", value: access_token });
-        const res = new Response(null, { status: 302 });
-        res.headers.set("Location", url.origin);
-        return res;
-      } else {
-        return authRedirect();
+      try {
+        const { access_token } = await (
+          await fetch(`${url.origin}/.netlify/functions/getToken?code=${code}`)
+        ).json();
+        if (access_token) {
+          context.cookies.set({ name: "AAD_Token", value: access_token });
+          const res = new Response(null, { status: 302 });
+          res.headers.set("Location", url.origin);
+          return res;
+        } else {
+          return authRedirect();
+        }
+      } catch (error) {
+        console.log(error);
+        return context.next();
       }
     } else {
       return authRedirect();
