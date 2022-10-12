@@ -53,11 +53,8 @@ const ssoAuth = async (request, context) => {
         const res = await fetch(
           `${url.origin}/.netlify/functions/getToken?code=${code}`
         );
-        const text = await res.text();
-
-        console.log(text);
         console.log(`${url.origin}/.netlify/functions/getToken?code=${code}`);
-        //const { access_token } = await res.json();
+        const { access_token } = await res.json();
         console.log("Access token", access_token);
 
         if (access_token) {
