@@ -1,3 +1,39 @@
+const createForm = (details) => {
+  let formBody = [];
+  for (const property in details) {
+    const encodedKey = encodeURIComponent(property);
+    const encodedValue = encodeURIComponent(details[property]);
+    formBody.push(encodedKey + "=" + encodedValue);
+  }
+  formBody = formBody.join("&");
+  return formBody;
+};
+
+const getToken = async (code, clientId, secret, url) => {
+  const config = {
+    grant_type: "authorization_code",
+    code: code,
+    client_id: clientId,
+    client_secret: secret,
+    redirect_uri: url,
+  };
+  const form = createForm(config);
+
+  const res = await fetch(
+    "https://login.microsoftonline.com/7c33e7e3cfed48239c3cee38f4235944/oauth2/v2.0/token",
+    {
+      method: "POST",
+      headers: {
+        "Content-type": "application/x-www-form-urlencoded",
+      },
+      body: form,
+    }
+  );
+
+  const data = await res.json();
+  return data.access_token;
+};
+
 const ssoAuth = async (request, context) => {
   const {
     AZURE_AD_CLIENT_ID: clientId,
@@ -48,26 +84,14 @@ const ssoAuth = async (request, context) => {
     } else if (path === "/.netlify/functions/getToken") {
       return context.next();
     } else if (code) {
-      try {
-        console.log("Here starting fetch");
-        const res = await fetch(
-          `${url.origin}/.netlify/functions/getToken?code=${code}`
-        );
-        console.log(`${url.origin}/.netlify/functions/getToken?code=${code}`);
-        const { access_token } = await res.json();
-        console.log("Access token", access_token);
-
-        if (access_token) {
-          context.cookies.set({ name: "AAD_Token", value: access_token });
-          const res = new Response(null, { status: 302 });
-          res.headers.set("Location", url.origin);
-          return res;
-        } else {
-          return authRedirect();
-        }
-      } catch (error) {
-        console.log(error);
-        return context.next();
+      const access_token = await getToken(code, clientId, secret, url.origin);
+      if (access_token) {
+        context.cookies.set({ name: "AAD_Token", value: access_token });
+        const res = new Response(null, { status: 302 });
+        res.headers.set("Location", url.origin);
+        return res;
+      } else {
+        return authRedirect();
       }
     } else {
       return authRedirect();
