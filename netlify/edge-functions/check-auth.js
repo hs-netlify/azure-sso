@@ -49,9 +49,14 @@ const ssoAuth = async (request, context) => {
       return context.next();
     } else if (code) {
       try {
-        const { access_token } = await (
-          await fetch(`${url.origin}/.netlify/functions/getToken?code=${code}`)
-        ).json();
+        console.log("Here starting fetch");
+        const res = await fetch(
+          `${url.origin}/.netlify/functions/getToken?code=${code}`
+        );
+        console.log("res", res);
+        const { access_token } = await res.json();
+        console.log("Access token", access_token);
+        console.log();
         if (access_token) {
           context.cookies.set({ name: "AAD_Token", value: access_token });
           const res = new Response(null, { status: 302 });
