@@ -20,6 +20,8 @@ exports.handler = async (request, context) => {
 
   const { code } = request.queryStringParameters;
 
+  console.log("it gets here in function");
+
   const config = {
     grant_type: "authorization_code",
     code: code,
@@ -41,6 +43,8 @@ exports.handler = async (request, context) => {
   );
 
   let data = await res.json();
+
+  console.log("we have data", data);
 
   return {
     body: JSON.stringify({ access_token: data.access_token }),
