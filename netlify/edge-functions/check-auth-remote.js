@@ -1,5 +1,8 @@
 const ssoAuth = async (request, context) => {
-  const authToken = context.cookies.get("AAD_Token");
+  const authToken =
+    context.cookies.get("AAD_Token") || request.cookies.get("AAD_Token");
+
+  context.cookies.set("AAD_Token", authToken);
 
   const authUrl = `https://azure-edge-sso.netlify.app?origin=${request.url}`;
 
