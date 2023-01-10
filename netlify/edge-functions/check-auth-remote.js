@@ -1,7 +1,7 @@
 const ssoAuth = async (request, context) => {
   const authToken = context.cookies.get("AAD_Token");
 
-  const authUrl = `https://azure-edge-sso.netlify.app$?origin=${request.url}`;
+  const authUrl = `https://azure-edge-sso.netlify.app?origin=${request.url}`;
 
   const isValid = async (token) => {
     const response = await fetch(`https://graph.microsoft.com/oidc/userinfo`, {
