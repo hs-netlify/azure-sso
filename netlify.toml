@@ -1,7 +1,7 @@
 
 [[edge_functions]]
     path='/*'
-    function='check-auth'
+    function='check-auth-remote'
 
 
 [functions]

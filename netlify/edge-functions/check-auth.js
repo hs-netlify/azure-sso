@@ -9,13 +9,14 @@ const createForm = (details) => {
   return formBody;
 };
 
-const getToken = async (code, clientId, secret, url) => {
+const getToken = async (code, clientId, secret, url, state) => {
   const config = {
     grant_type: "authorization_code",
     code: code,
     client_id: clientId,
     client_secret: secret,
     redirect_uri: url,
+    state,
   };
   const form = createForm(config);
 
@@ -47,8 +48,10 @@ const ssoAuth = async (request, context) => {
     const path = url.pathname;
     const params = new URLSearchParams(url.search);
     const code = params.get("code");
+    const state = params.get("state");
 
     const redirectUri = url.origin;
+    const originAppUrl = params.get("origin");
 
     const isValid = async (token) => {
       const response = await fetch(
@@ -68,11 +71,12 @@ const ssoAuth = async (request, context) => {
       return Response.redirect(
         `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(
           redirectUri
-        )}&response_mode=query&scope=https://graph.microsoft.com/openid&state=1234`
+        )}&response_mode=query&scope=https://graph.microsoft.com/openid&state=${originAppUrl}`
       );
     };
 
     if (authToken) {
+      console.log(request.url);
       if (await isValid(authToken)) {
         return context.next();
       } else {
@@ -81,14 +85,13 @@ const ssoAuth = async (request, context) => {
         res.headers.set("Location", url.origin);
         return res;
       }
-    } else if (path === "/.netlify/functions/getToken") {
-      return context.next();
     } else if (code) {
+      console.log("state here", state);
       const access_token = await getToken(code, clientId, secret, url.origin);
       if (access_token) {
         context.cookies.set({ name: "AAD_Token", value: access_token });
         const res = new Response(null, { status: 302 });
-        res.headers.set("Location", url.origin);
+        res.headers.set("Location", state || url.origin);
         return res;
       } else {
         return authRedirect();
