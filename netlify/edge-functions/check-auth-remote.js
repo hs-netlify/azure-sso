@@ -1,8 +1,12 @@
 const ssoAuth = async (request, context) => {
-  const authToken =
-    context.cookies.get("AAD_Token") || request.cookies.get("AAD_Token");
+  let authToken = context.cookies.get("AAD_Token");
+  const url = new URL(request.url);
+  const params = new URLSearchParams(url.search);
+  const tokenParam = params.get("aadToken");
 
-  context.cookies.set("AAD_Token", authToken);
+  if (!authToken && tokenParam) {
+    authToken = tokenParam;
+  }
 
   const authUrl = `https://azure-edge-sso.netlify.app?origin=${request.url}`;
 
@@ -19,11 +23,18 @@ const ssoAuth = async (request, context) => {
 
   if (authToken) {
     if (await isValid(authToken)) {
-      return context.next();
+      if (tokenParam) {
+        const res = new Response(null, { status: 301 });
+        res.headers.set("Location", `${url.origin}${url.pathname}`);
+        res.headers.set("Set-Cookie", `AAD_Token=${authToken}`);
+        return res;
+      } else {
+        return context.next();
+      }
     } else {
       context.cookies.delete("AAD_Token");
       const res = new Response(null, { status: 302 });
-      res.headers.set("Location", request.url);
+      res.headers.set("Location", authUrl);
       return res;
     }
   } else {
